@@ -1,0 +1,78 @@
+- become: yes
+  hosts: all
+  name: rancher-master
+
+
+  tasks:
+    - name: Instalação do aptitude usando apt get
+      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+    - name: Instalação dos pacotes de sistema
+      apt: name={{ item }} state=latest update_cache=yes
+      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools']
+
+    - name: Adicionando a chave GPG 
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Adicionando o repositório do Docker
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+
+    - name: Atualização via apt e instalação do Docker
+      apt: update_cache=yes name=docker-ce state=latest
+
+    - name: Instalação do Docker via Python
+      pip:
+        name: docker
+
+    - name: Install docker-compose from official github repo
+      get_url:
+        url : https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: 'u+x,g+x'
+    
+    - name: Instalação git
+      apt:        
+        name: git
+        update_cache: yes
+        state: latest
+
+    - name: Criação de diretório para o git devops
+      ansible.builtin.file:
+        path: /opt/devops
+        state: directory
+        mode: '0755'
+
+    - name: Criação de diretório /opt/rancher
+      ansible.builtin.file:
+        path: /opt/rancher
+        state: directory
+        mode: '0755'
+    
+    - name: Clone a github repository
+      git:
+        repo: https://github.com/jonathanbaraldi/devops
+        dest: /opt/devops
+        clone: yes
+        update: yes
+    
+
+    - name: Create default containers
+      docker_container:
+        name: "rancher"
+        image: "rancher/rancher:v2.4.3"
+        command: "docker run -d --name rancher --restart=unless-stopped -v /opt/rancher:/var/lib/rancher  -p 80:80 -p 443:443"
+        state: present
+      # with_sequence: count={{ create_containers }}
+    # - name: Execução do container Rancher
+    #   docker:
+    #     name: rancher
+    #     image: rancher/rancher:v2.4.3
+    #     command: docker run -d --name rancher --restart=unless-stop -v /opt/rancher:/var/lib
+    #     state: started
+    #     ports:
+    #     - "80:80"
+    #     - "443:443"
