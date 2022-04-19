@@ -6,7 +6,7 @@ variable "pvt_key" {
     default = ""
 }
 
+
 variable "pub_key" {
     default = ""
 }
-

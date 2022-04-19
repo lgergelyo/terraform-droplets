@@ -40,33 +40,6 @@
         update_cache: yes
         state: latest
 
-    - name: Criação de diretório para o git devops
-      ansible.builtin.file:
-        path: /opt/devops
-        state: directory
-        mode: '0755'
+        
 
-    - name: Criação de diretório /opt/rancher
-      ansible.builtin.file:
-        path: /opt/rancher
-        state: directory
-        mode: '0755'
-    
-    - name: Clone a github repository
-      git:
-        repo: https://github.com/jonathanbaraldi/devops
-        dest: /opt/devops
-        clone: yes
-        update: yes
-    
 
-    - name: Create default containers
-      docker_container:
-        name: "rancher"
-        image: "rancher/rancher:v2.4.3"
-        ports:
-        - "80:80"
-        - "443:443"
-        volumes:
-        - /opt/rancher:/var/lib/rancher
-        restart: yes
